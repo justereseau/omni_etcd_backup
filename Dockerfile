@@ -9,8 +9,8 @@ RUN wget https://github.com/Backblaze/B2_Command_Line_Tool/releases/latest/downl
 
 FROM alpine
 LABEL maintainer="Sonic <sonic@djls.io>"
-LABEL org.opencontainers.image.source=https://github.com/justereseau/wip
-LABEL org.opencontainers.image.description="wip"
+LABEL org.opencontainers.image.source=https://github.com/justereseau/omni_etcd_backup
+LABEL org.opencontainers.image.description="This is a simple image that contain the requirement to backup an etcd omni instance to B2."
 LABEL org.opencontainers.image.licenses=WTFPL
 
 # Copy required binaries from etcd image
