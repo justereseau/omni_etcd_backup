@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Required parameters:
 # - ETCD_ENDPOINT: the etcd endpoint that we want to backup
