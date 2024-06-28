@@ -105,11 +105,11 @@ xz -d /tmp/omni-etcd-snapshot.db.xz
 # Check the status of the snapshot #
 # -------------------------------- #
 
-etcdctl snapshot status /tmp/omni-etcd-snapshot.db
+etcdutl snapshot status /tmp/omni-etcd-snapshot.db
 
 # -------------------------- #
 # Extract the backup content #
 # -------------------------- #
 
-etcdctl snapshot restore /tmp/omni-etcd-snapshot.db --data-dir=$ETCD_DIR
+etcdutl snapshot restore /tmp/omni-etcd-snapshot.db --data-dir=$ETCD_DIR
 rm /tmp/omni-etcd-snapshot.db

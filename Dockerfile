@@ -15,6 +15,7 @@ LABEL org.opencontainers.image.licenses=WTFPL
 
 # Copy required binaries from etcd image
 COPY --from=etcd /usr/local/bin/etcdctl /usr/local/bin/etcdctl
+COPY --from=etcd /usr/local/bin/etcdutl /usr/local/bin/etcdutl
 COPY --from=builder /usr/local/bin/b2 /usr/local/bin/b2
 
 RUN apk add --no-cache bash gnupg xz
