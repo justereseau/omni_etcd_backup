@@ -50,8 +50,10 @@ etcdctl --endpoints ${ETCD_ENDPOINT} endpoint health
 echo "Creating the snapshot of the etcd endpoint"
 etcdctl --endpoints ${ETCD_ENDPOINT} snapshot save /tmp/${SNAPSHOT_NAME}.db
 
+# -------------------------- #
+# Compress the ETCd snapshot #
+# -------------------------- #
 
-# Test the compressions
 echo "Compressing the snapshot"
 du -h /tmp/${SNAPSHOT_NAME}.db
 xz /tmp/${SNAPSHOT_NAME}.db
