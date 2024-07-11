@@ -56,7 +56,7 @@ etcdctl --endpoints ${ETCD_ENDPOINT} snapshot save /tmp/${SNAPSHOT_NAME}.db
 
 echo "Compressing the snapshot"
 du -h /tmp/${SNAPSHOT_NAME}.db
-xz /tmp/${SNAPSHOT_NAME}.db
+xz -f /tmp/${SNAPSHOT_NAME}.db
 du -h /tmp/${SNAPSHOT_NAME}.db.xz
 
 # --------------------------------------------------- #
