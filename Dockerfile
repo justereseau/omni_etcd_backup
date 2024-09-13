@@ -1,4 +1,4 @@
-FROM gcr.io/etcd-development/etcd:v3.5.15 as etcd
+FROM gcr.io/etcd-development/etcd:v3.5.16 as etcd
 
 FROM alpine:3.20.2 as builder
 
