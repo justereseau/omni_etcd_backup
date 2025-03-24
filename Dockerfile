@@ -1,4 +1,4 @@
-FROM gcr.io/etcd-development/etcd:v3.5.17 AS etcd
+FROM gcr.io/etcd-development/etcd:v3.5.20 AS etcd
 FROM alpine:3.21.2 AS builder
 
 RUN apk add --no-cache wget
