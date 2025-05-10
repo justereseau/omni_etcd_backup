@@ -56,43 +56,30 @@ RUN case $(uname -m) in \
   echo "Building for $GOOS/$GOARCH" > /tmp/build-out.txt && \
   go install -v -ldflags "$(go run buildscripts/gen-ldflags.go)" "github.com/minio/mc@latest"
 
+# =============================================
 
-# # Get the source code
-# RUN RELEASE_NAME=$(curl -s https://api.github.com/repos/minio/mc/releases/${MC_VERSION} | jq -r '.tag_name') && \
-#   curl -sL https://github.com/minio/mc/archive/refs/tags/$RELEASE_NAME.tar.gz -o /tmp/source.tar.gz && \
-#   tar -xzf /tmp/source.tar.gz --strip-components=1
-
-
-
-# # =============================================
-
-# FROM python:3.13-alpine
+FROM alpine:3.21
 
 # # Install required packages
-# RUN apk add --no-cache bash gnupg xz
+RUN apk add --no-cache bash gnupg xz
 
-# # Copy required binaries from etcd image
-# COPY --from=etcd-builder /build/bin/etcdctl /usr/local/bin/etcdctl
-# COPY --from=etcd-builder /build/bin/etcdutl /usr/local/bin/etcdutl
+# Copy required binaries from etcd image
+COPY --from=etcd-builder /build/bin/etcdctl /usr/local/bin/etcdctl
+COPY --from=etcd-builder /build/bin/etcdutl /usr/local/bin/etcdutl
 
-# # Copy required binaries from b2 image
-# COPY --from=b2-builder /build/__pypackages__/bin/b2 /usr/local/bin/b2
-# COPY --from=b2-builder /build/__pypackages__/lib /opt/b2
+# Copy required binaries from mc image
+COPY --from=mc-builder /go/bin/mc /usr/local/bin/mc
 
-# # Configuring the environment for b2
-# ENV B2_CLI_DOCKER=1
-# ENV PYTHONPATH=/opt/b2
+# Ensure the binaries version
+RUN echo "   etcd version: $(etcd --version)" >> /tmp/build-out.txt && \
+  echo "etcdctl version: $(etcdctl version)" >> /tmp/build-out.txt && \
+  echo "etcdutl version: $(etcdutl version)" >> /tmp/build-out.txt && \
+  echo "     mc version: $(mc --version)" >> /tmp/build-out.txt && \
+  cat /tmp/build-out.txt
 
-# # Ensure the binaries version
-# RUN echo "   etcd version: $(etcd --version)" >> /tmp/build-out.txt && \
-#   echo "etcdctl version: $(etcdctl version)" >> /tmp/build-out.txt && \
-#   echo "etcdutl version: $(etcdutl version)" >> /tmp/build-out.txt && \
-#   echo "     b2 version: $(b2 version)" >> /tmp/build-out.txt && \
-#   cat /tmp/build-out.txt
-
-# RUN mkdir /scripts
-
-# COPY --chmod=0755 --chown=root:root backup.sh /scripts/backup.sh
-# COPY --chmod=0755 --chown=root:root restore.sh /scripts/restore.sh
+# Push the scripts to the image
+RUN mkdir /scripts
+COPY --chmod=0755 backup.sh /scripts/backup.sh
+COPY --chmod=0755 restore.sh /scripts/restore.sh
 
 # ENTRYPOINT [ "/scripts/backup.sh" ]

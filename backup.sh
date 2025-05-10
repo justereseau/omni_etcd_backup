@@ -7,12 +7,13 @@ set -e
 # - GPG_PUBLIC_KEY: the public key that will be used to encrypt the backup file
 # - DRY_RUN: if set to 1, the script will not perform any action
 # 
-# Optional parameters for B2 push - if any of these are not set, the script will not push the backup to B2:
-# - B2_BUCKET_NAME: the name of the B2 bucket where the backup will be stored
-# - B2_APPLICATION_KEY_ID: the application key ID that will be used to authenticate with B2
-# - B2_APPLICATION_KEY: the application key that will be used to authenticate with B2
+# Optional parameters for B2 push - if any of these are not set, the script will not push the backup to an S3 bucket:
+# - S3_ENDPOINT: the S3 endpoint that will be used to push the backup
+# - S3_BUCKET_NAME: the name of the B2 bucket where the backup will be stored
+# - S3_ACCESS_KEY: the application key ID that will be used to authenticate with B2
+# - S3_SECRET_KEY: the application key that will be used to authenticate with B2
 
-B2_ENABLED=1
+S3_ENABLED=1
 
 # ------------------------------------------- #
 # Ensure that the required parameters are set #
@@ -26,18 +27,14 @@ if [ -z "$ETCD_ENDPOINT" ]; then
   echo "ETCD_ENDPOINT is not set. Please set it to the etcd endpoint."
   exit 1
 fi
-if [ -z "$ETCD_BACKUP_DIR" ]; then
-  ETCD_BACKUP_DIR="/backups"
-fi
-if [ -z "$SNAPSHOT_NAME" ]; then
-  SNAPSHOT_NAME="omni-etcd-snapshot"
-fi
+ETCD_BACKUP_DIR=${ETCD_BACKUP_DIR:-"/backups"}
+SNAPSHOT_NAME=${SNAPSHOT_NAME:-"omni-etcd-snapshot"}
 
 # We check if any B2 parameters is not set
-if [ -z "$B2_BUCKET_NAME" ] || [ -z "$B2_APPLICATION_KEY_ID" ] || [ -z "$B2_APPLICATION_KEY" ]; then
-  echo "One or more of the B2_BUCKET_NAME, B2_APPLICATION_KEY_ID, B2_APPLICATION_KEY environment variables are not set."
+if [ -z "$S3_ENDPOINT" ] || [ -z "$S3_BUCKET_NAME" ] || [ -z "$S3_ACCESS_KEY" ] || [ -z "$S3_SECRET_KEY" ]; then
+  echo "One or more of the S3_ENDPOINT, S3_BUCKET_NAME, S3_ACCESS_KEY, S3_SECRET_KEY environment variables are not set."
   echo "Disabling B2 backup."
-  B2_ENABLED=0
+  S3_ENABLED=0
 fi
 
 # -------------------------- #
@@ -77,17 +74,17 @@ echo "Encrypt the snapshot as $SNAPSHOT_GPG_NAME"
 rm -f ${ETCD_BACKUP_DIR}/${SNAPSHOT_GPG_NAME}
 gpg --trust-model always --output ${ETCD_BACKUP_DIR}/${SNAPSHOT_GPG_NAME} --encrypt --recipient $GPG_KEY_ID /tmp/${SNAPSHOT_NAME}.db.xz
 
-
 echo "Remove the unencrypted snapshot"
 rm /tmp/${SNAPSHOT_NAME}.db.xz
 
-# ------------------------------------------------------------- #
-# Push the encrypted snapshot to the backup storage if required #
-# ------------------------------------------------------------- #
+# -------------------------------------------------------- #
+# Push the encrypted snapshot to the s3 bucket if required #
+# -------------------------------------------------------- #
 
-if [ $B2_ENABLED -eq 1 ]; then
-  echo "Upload the encrypted snapshot to the backup storage"
-  b2 file upload $B2_BUCKET_NAME ${ETCD_BACKUP_DIR}/${SNAPSHOT_GPG_NAME} $SNAPSHOT_GPG_NAME
+if [ $S3_ENABLED -eq 1 ]; then
+  echo "Upload the encrypted snapshot to the backup storage ($S3_BUCKET_NAME on $S3_ENDPOINT)"
+  MC_HOST_S3=https://$S3_ACCESS_KEY:$S3_SECRET_KEY@$S3_ENDPOINT
+  mc ls S3/$S3_BUCKET_NAME
 else
-  echo "B2 backup is disabled. Skipping the upload."
+  echo "S3 backup is disabled. Skipping the upload."
 fi
