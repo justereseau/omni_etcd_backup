@@ -52,6 +52,9 @@ RUN export PDM_BUILD_SCM_VERSION=$(curl -s https://api.github.com/repos/Backblaz
 
 FROM python:3.13-alpine
 
+# Install required packages
+RUN apk add --no-cache bash gnupg xz
+
 # Copy required binaries from etcd image
 COPY --from=etcd-builder /build/bin/etcdctl /usr/local/bin/etcdctl
 COPY --from=etcd-builder /build/bin/etcdutl /usr/local/bin/etcdutl
@@ -62,7 +65,7 @@ COPY --from=b2-builder /build/__pypackages__/lib /opt/b2
 
 # Configuring the environment for b2
 ENV B2_CLI_DOCKER=1
-ENV PYTHONPATH=/build/__pypackages__/lib
+ENV PYTHONPATH=/opt/b2
 
 # Ensure the binaries version
 RUN echo "   etcd version: $(etcd --version)" >> /tmp/build-out.txt && \
@@ -71,33 +74,9 @@ RUN echo "   etcd version: $(etcd --version)" >> /tmp/build-out.txt && \
   echo "     b2 version: $(b2 version)" >> /tmp/build-out.txt && \
   cat /tmp/build-out.txt
 
-ENTRYPOINT [ "cat", "/tmp/build-out.txt" ]
+RUN mkdir /scripts
 
-# FROM alpine:3.21.3
+COPY --chmod=0755 --chown=root:root backup.sh /scripts/backup.sh
+COPY --chmod=0755 --chown=root:root restore.sh /scripts/restore.sh
 
-
-
-# COPY build.sh /build/build.sh
-# RUN chmod +x /build/build.sh
-# RUN /build/build.sh
-
-# ENTRYPOINT [ "/build/build.sh" ]
-
-# RUN /opt/build.sh
-
-# # Copy required binaries from etcd image
-# COPY --from=etcd /usr/local/bin/etcdctl /usr/local/bin/etcdctl
-# COPY --from=etcd /usr/local/bin/etcdutl /usr/local/bin/etcdutl
-# COPY --from=builder /usr/local/bin/b2 /usr/local/bin/b2
-
-# RUN apk add --no-cache bash gnupg xz
-
-# RUN mkdir /scripts
-
-# COPY backup.sh /scripts/backup.sh
-# RUN chmod +x /scripts/backup.sh
-
-# COPY restore.sh /scripts/restore.sh
-# RUN chmod +x /scripts/restore.sh
-
-# ENTRYPOINT [ "/scripts/backup.sh" ]
+ENTRYPOINT [ "/scripts/backup.sh" ]
