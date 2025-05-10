@@ -7,7 +7,7 @@ LABEL org.opencontainers.image.licenses=WTFPL
 
 ARG ETCD_VERSION=latest
 
-RUN apk add --no-cache bash curl jq
+RUN apk add --no-cache bash curl jq git
 
 RUN mkdir /build
 WORKDIR /build
@@ -27,10 +27,17 @@ RUN case $(uname -m) in \
   echo "Building for $GOOS/$GOARCH" > /tmp/build-out.txt && \
   ./build.sh
 
+FROM backblazeit/b2:latest
+
+# Copy required binaries from etcd image
+COPY --from=etcd-builder /build/bin/etcdctl /usr/local/bin/etcdctl
+COPY --from=etcd-builder /build/bin/etcdutl /usr/local/bin/etcdutl
+
 # Ensure the binaries version
-RUN echo "etcd version:  $(/build/bin/etcd --version)" >> /tmp/build-out.txt && \
-  echo "etcdctl version: $(/build/bin/etcdctl version)" >> /tmp/build-out.txt && \
-  echo "etcdutl version: $(/build/bin/etcdutl version)" >> /tmp/build-out.txt && \
+RUN echo "   etcd version: $(etcd --version)" >> /tmp/build-out.txt && \
+  echo "etcdctl version: $(etcdctl version)" >> /tmp/build-out.txt && \
+  echo "etcdutl version: $(etcdutl version)" >> /tmp/build-out.txt && \
+  echo "     b2 version: $(b2 version)" >> /tmp/build-out.txt && \
   cat /tmp/build-out.txt
 
 ENTRYPOINT [ "cat", "/tmp/build-out.txt" ]
