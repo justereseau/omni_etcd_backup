@@ -1,4 +1,4 @@
-name: Build and test
+name: Build and Push
 
 env:
   IMAGE_NAME: ghcr.io/justereseau/omni_etcd_backup

@@ -1,4 +1,4 @@
-name: Image Build and Push
+name: Dev build
 
 env:
   IMAGE_NAME: ghcr.io/justereseau/omni_etcd_backup
@@ -22,5 +22,5 @@ jobs:
         with:
           context: .
           platforms: linux/arm64,linux/amd64,linux/arm/v7
-          push: false
+          push: true
           tags: "${{ env.IMAGE_NAME }}:dev"
