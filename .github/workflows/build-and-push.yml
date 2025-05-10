@@ -1,12 +1,10 @@
-name: Build and Push
+name: Build and Push release
 
 env:
   IMAGE_NAME: ghcr.io/justereseau/omni_etcd_backup
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
     branches: ["main"]
 
 jobs:
