@@ -29,22 +29,36 @@ RUN case $(uname -m) in \
 
 # =============================================
 
-FROM python:slim AS builder
+FROM python:3.13-alpine AS b2-builder
 
-RUN apt-get update -y && apt-get install git patchelf -y && pip install -U pdm
+ARG B2_VERSION=latest
+
+RUN apk add --no-cache curl git jq patchelf && pip install -U pdm
 
 RUN mkdir /build
 WORKDIR /build
 
 # Get the B2's source code
-RUN B2_RELEASE_NAME=$(curl -s https://api.github.com/repos/Backblaze/B2_Command_Line_Tool/releases/${ETCD_VERSION} | jq -r '.tag_name') && \
-  curl -sL https://github.com/Backblaze/B2_Command_Line_Tool/archive/refs/tags/$B2_RELEASE_NAME.tar.gz -o /tmp/b2-source.tar.gz && \
-  tar -xzf /tmp/b2-source.tar.gz --strip-components=1
+RUN export PDM_BUILD_SCM_VERSION=$(curl -s https://api.github.com/repos/Backblaze/B2_Command_Line_Tool/releases/${B2_VERSION} | jq -r '.tag_name') && \
+  curl -sL https://github.com/Backblaze/B2_Command_Line_Tool/archive/refs/tags/$PDM_BUILD_SCM_VERSION.tar.gz -o /tmp/b2-source.tar.gz && \
+  tar -xzf /tmp/b2-source.tar.gz --strip-components=1 && \
+  pdm install --prod --group license && \
+  pdm run b2 license --dump --with-packages && \
+  rm -r .venv && mkdir __pypackages__ && pdm install --prod --group full --no-editable && \
+  mv __pypackages__/$(python -V | awk '{print $2}' | cut -d '.' -f 1-2) __pypackages__
+
+
+# # Move the b2 required files to /b2/
+# RUN mkdir /b2 \
+#   && mv __pypackages__/$(python -V | awk '{print $2}' | cut -d '.' -f 1-2)/bin /b2/ \
+#   && mv __pypackages__/$(python -V | awk '{print $2}' | cut -d '.' -f 1-2)/lib /b2/
+
+ENV B2_CLI_DOCKER=1
+ENV PYTHONPATH=/build/__pypackages__/lib
 
 ENTRYPOINT [ "/bin/bash" ]
 
 # =============================================
-
 
 # # Copy required binaries from etcd image
 # COPY --from=etcd-builder /build/bin/etcdctl /usr/local/bin/etcdctl
