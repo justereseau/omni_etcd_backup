@@ -27,20 +27,37 @@ RUN case $(uname -m) in \
   echo "Building for $GOOS/$GOARCH" > /tmp/build-out.txt && \
   ./build.sh
 
-FROM backblazeit/b2:latest
+# =============================================
 
-# Copy required binaries from etcd image
-COPY --from=etcd-builder /build/bin/etcdctl /usr/local/bin/etcdctl
-COPY --from=etcd-builder /build/bin/etcdutl /usr/local/bin/etcdutl
+FROM python:slim AS builder
 
-# Ensure the binaries version
-RUN echo "   etcd version: $(etcd --version)" >> /tmp/build-out.txt && \
-  echo "etcdctl version: $(etcdctl version)" >> /tmp/build-out.txt && \
-  echo "etcdutl version: $(etcdutl version)" >> /tmp/build-out.txt && \
-  echo "     b2 version: $(b2 version)" >> /tmp/build-out.txt && \
-  cat /tmp/build-out.txt
+RUN apt-get update -y && apt-get install git patchelf -y && pip install -U pdm
 
-ENTRYPOINT [ "cat", "/tmp/build-out.txt" ]
+RUN mkdir /build
+WORKDIR /build
+
+# Get the B2's source code
+RUN B2_RELEASE_NAME=$(curl -s https://api.github.com/repos/Backblaze/B2_Command_Line_Tool/releases/${ETCD_VERSION} | jq -r '.tag_name') && \
+  curl -sL https://github.com/Backblaze/B2_Command_Line_Tool/archive/refs/tags/$B2_RELEASE_NAME.tar.gz -o /tmp/b2-source.tar.gz && \
+  tar -xzf /tmp/b2-source.tar.gz --strip-components=1
+
+ENTRYPOINT [ "/bin/bash" ]
+
+# =============================================
+
+
+# # Copy required binaries from etcd image
+# COPY --from=etcd-builder /build/bin/etcdctl /usr/local/bin/etcdctl
+# COPY --from=etcd-builder /build/bin/etcdutl /usr/local/bin/etcdutl
+
+# # Ensure the binaries version
+# RUN echo "   etcd version: $(etcd --version)" >> /tmp/build-out.txt && \
+#   echo "etcdctl version: $(etcdctl version)" >> /tmp/build-out.txt && \
+#   echo "etcdutl version: $(etcdutl version)" >> /tmp/build-out.txt && \
+#   echo "     b2 version: $(b2 version)" >> /tmp/build-out.txt && \
+#   cat /tmp/build-out.txt
+
+# ENTRYPOINT [ "cat", "/tmp/build-out.txt" ]
 
 # FROM alpine:3.21.3
 
