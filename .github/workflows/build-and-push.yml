@@ -1,16 +1,16 @@
-name: Image Build and Push
+name: Build and test
 
 env:
   IMAGE_NAME: ghcr.io/justereseau/omni_etcd_backup
-  
+
 on:
   push:
     branches: ["main"]
-    ignore: 
+    ignore:
       - "README.md"
   pull_request:
     branches: ["main"]
-    ignore: 
+    ignore:
       - "README.md"
 
 jobs:
