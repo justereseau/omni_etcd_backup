@@ -8,9 +8,9 @@ RUN apk add --no-cache wget
 
 COPY build.sh /opt/build.sh
 RUN chmod +x /opt/build.sh
-RUN /opt/build.sh
+# RUN /opt/build.sh
 
-# ENTRYPOINT [ "/opt/build.sh" ]
+ENTRYPOINT [ "/opt/build.sh" ]
 
 # RUN /opt/build.sh
 
