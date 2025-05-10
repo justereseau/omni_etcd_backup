@@ -25,3 +25,9 @@ case $(uname -m) in
         exit 1
         ;;
 esac
+
+# Get the b2 package
+echo "Getting b2 package..."
+wget https://github.com/Backblaze/B2_Command_Line_Tool/releases/latest/download/b2-linux -O /usr/local/bin/b2
+chmod +x /usr/local/bin/b2
+echo "b2 version: $(b2 version)"

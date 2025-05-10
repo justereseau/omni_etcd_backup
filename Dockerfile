@@ -4,11 +4,13 @@ LABEL org.opencontainers.image.source=https://github.com/justereseau/omni_etcd_b
 LABEL org.opencontainers.image.description="This is a simple image that contain the requirement to backup an etcd omni instance to B2."
 LABEL org.opencontainers.image.licenses=WTFPL
 
+RUN apk add --no-cache wget
+
 COPY build.sh /opt/build.sh
 RUN chmod +x /opt/build.sh
-RUN /opt/build.sh
+# RUN /opt/build.sh
 
-# ENTRYPOINT [ "/opt/build.sh" ]
+ENTRYPOINT [ "/opt/build.sh" ]
 
 # RUN /opt/build.sh
 
