@@ -45,33 +45,33 @@ RUN export PDM_BUILD_SCM_VERSION=$(curl -s https://api.github.com/repos/Backblaz
   pdm install --prod --group license && \
   pdm run b2 license --dump --with-packages && \
   rm -r .venv && mkdir __pypackages__ && pdm install --prod --group full --no-editable && \
-  mv __pypackages__/$(python -V | awk '{print $2}' | cut -d '.' -f 1-2) __pypackages__
-
-
-# # Move the b2 required files to /b2/
-# RUN mkdir /b2 \
-#   && mv __pypackages__/$(python -V | awk '{print $2}' | cut -d '.' -f 1-2)/bin /b2/ \
-#   && mv __pypackages__/$(python -V | awk '{print $2}' | cut -d '.' -f 1-2)/lib /b2/
-
-ENV B2_CLI_DOCKER=1
-ENV PYTHONPATH=/build/__pypackages__/lib
-
-ENTRYPOINT [ "/bin/bash" ]
+  mv /build/__pypackages__/$(python -V | awk '{print $2}' | cut -d '.' -f 1-2)/* /build/__pypackages__ && \
+  rm -r /build/__pypackages__/$(python -V | awk '{print $2}' | cut -d '.' -f 1-2)
 
 # =============================================
 
-# # Copy required binaries from etcd image
-# COPY --from=etcd-builder /build/bin/etcdctl /usr/local/bin/etcdctl
-# COPY --from=etcd-builder /build/bin/etcdutl /usr/local/bin/etcdutl
+FROM python:3.13-alpine
 
-# # Ensure the binaries version
-# RUN echo "   etcd version: $(etcd --version)" >> /tmp/build-out.txt && \
-#   echo "etcdctl version: $(etcdctl version)" >> /tmp/build-out.txt && \
-#   echo "etcdutl version: $(etcdutl version)" >> /tmp/build-out.txt && \
-#   echo "     b2 version: $(b2 version)" >> /tmp/build-out.txt && \
-#   cat /tmp/build-out.txt
+# Copy required binaries from etcd image
+COPY --from=etcd-builder /build/bin/etcdctl /usr/local/bin/etcdctl
+COPY --from=etcd-builder /build/bin/etcdutl /usr/local/bin/etcdutl
 
-# ENTRYPOINT [ "cat", "/tmp/build-out.txt" ]
+# Copy required binaries from b2 image
+COPY --from=b2-builder /build/__pypackages__/bin/b2 /usr/local/bin/b2
+COPY --from=b2-builder /build/__pypackages__/lib /opt/b2
+
+# Configuring the environment for b2
+ENV B2_CLI_DOCKER=1
+ENV PYTHONPATH=/build/__pypackages__/lib
+
+# Ensure the binaries version
+RUN echo "   etcd version: $(etcd --version)" >> /tmp/build-out.txt && \
+  echo "etcdctl version: $(etcdctl version)" >> /tmp/build-out.txt && \
+  echo "etcdutl version: $(etcdutl version)" >> /tmp/build-out.txt && \
+  echo "     b2 version: $(b2 version)" >> /tmp/build-out.txt && \
+  cat /tmp/build-out.txt
+
+ENTRYPOINT [ "cat", "/tmp/build-out.txt" ]
 
 # FROM alpine:3.21.3
 
