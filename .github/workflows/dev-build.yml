@@ -23,3 +23,10 @@ jobs:
           context: .
           platforms: linux/arm64,linux/amd64,linux/arm/v7
           push: false
+          tags: "${{ env.IMAGE_NAME }}:dev"
+
+      - name: List the images
+        run: docker images
+
+      - name: Try to run the image
+        run: docker run --rm "${{ env.IMAGE_NAME }}:dev"

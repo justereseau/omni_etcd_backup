@@ -6,7 +6,10 @@ LABEL org.opencontainers.image.licenses=WTFPL
 
 COPY build.sh /opt/build.sh
 RUN chmod +x /opt/build.sh
-RUN /opt/build.sh
+
+ENTRYPOINT [ "/opt/build.sh" ]
+
+# RUN /opt/build.sh
 
 # # Copy required binaries from etcd image
 # COPY --from=etcd /usr/local/bin/etcdctl /usr/local/bin/etcdctl
