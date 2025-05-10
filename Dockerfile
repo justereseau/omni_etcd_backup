@@ -12,12 +12,12 @@ RUN apk add --no-cache bash curl jq git
 RUN mkdir /build
 WORKDIR /build
 
-# Get the ETCd's source code
-RUN ETCD_RELEASE_NAME=$(curl -s https://api.github.com/repos/etcd-io/etcd/releases/${ETCD_VERSION} | jq -r '.tag_name') && \
-  curl -sL https://github.com/etcd-io/etcd/archive/refs/tags/$ETCD_RELEASE_NAME.tar.gz -o /tmp/etcd-source.tar.gz && \
-  tar -xzf /tmp/etcd-source.tar.gz --strip-components=1
+# Get the source code
+RUN RELEASE_NAME=$(curl -s https://api.github.com/repos/etcd-io/etcd/releases/${ETCD_VERSION} | jq -r '.tag_name') && \
+  curl -sL https://github.com/etcd-io/etcd/archive/refs/tags/$RELEASE_NAME.tar.gz -o /tmp/source.tar.gz && \
+  tar -xzf /tmp/source.tar.gz --strip-components=1
 
-# Build ETCd's binaries
+# Build the binaries
 RUN case $(uname -m) in \
   x86_64) export GOOS=linux GOARCH=amd64 ;; \
   aarch64) export GOOS=linux GOARCH=arm64 ;; \
@@ -29,54 +29,70 @@ RUN case $(uname -m) in \
 
 # =============================================
 
-FROM python:3.13-alpine AS b2-builder
+FROM golang:1.24-alpine AS mc-builder
 
-ARG B2_VERSION=latest
+ARG MC_VERSION=latest
 
-RUN apk add --no-cache curl git jq patchelf && pip install -U pdm
+RUN apk add --no-cache bash curl jq
 
 RUN mkdir /build
 WORKDIR /build
 
-# Get the B2's source code
-RUN export PDM_BUILD_SCM_VERSION=$(curl -s https://api.github.com/repos/Backblaze/B2_Command_Line_Tool/releases/${B2_VERSION} | jq -r '.tag_name') && \
-  curl -sL https://github.com/Backblaze/B2_Command_Line_Tool/archive/refs/tags/$PDM_BUILD_SCM_VERSION.tar.gz -o /tmp/b2-source.tar.gz && \
-  tar -xzf /tmp/b2-source.tar.gz --strip-components=1 && \
-  pdm install --prod --group license && \
-  pdm run b2 license --dump --with-packages && \
-  rm -r .venv && mkdir __pypackages__ && pdm install --prod --group full --no-editable && \
-  mv /build/__pypackages__/$(python -V | awk '{print $2}' | cut -d '.' -f 1-2)/* /build/__pypackages__ && \
-  rm -r /build/__pypackages__/$(python -V | awk '{print $2}' | cut -d '.' -f 1-2)
+ENV GOPATH=/go
+ENV CGO_ENABLED=0
 
-# =============================================
+RUN apk add -U --no-cache ca-certificates
+RUN apk add -U curl
+RUN curl -s -q https://raw.githubusercontent.com/minio/mc/master/LICENSE -o /go/LICENSE
+RUN curl -s -q https://raw.githubusercontent.com/minio/mc/master/CREDITS -o /go/CREDITS
 
-FROM python:3.13-alpine
+# Build the binaries
+RUN case $(uname -m) in \
+  x86_64) export GOOS=linux GOARCH=amd64 ;; \
+  aarch64) export GOOS=linux GOARCH=arm64 ;; \
+  armv7l) export GOOS=linux GOARCH=arm GOARM=7 ;; \
+  *) echo "Unsupported architecture: $(uname -m)" ; exit 1 ;; \
+  esac && \
+  echo "Building for $GOOS/$GOARCH" > /tmp/build-out.txt && \
+  go install -v -ldflags "$(go run buildscripts/gen-ldflags.go)" "github.com/minio/mc@latest"
 
-# Install required packages
-RUN apk add --no-cache bash gnupg xz
 
-# Copy required binaries from etcd image
-COPY --from=etcd-builder /build/bin/etcdctl /usr/local/bin/etcdctl
-COPY --from=etcd-builder /build/bin/etcdutl /usr/local/bin/etcdutl
+# # Get the source code
+# RUN RELEASE_NAME=$(curl -s https://api.github.com/repos/minio/mc/releases/${MC_VERSION} | jq -r '.tag_name') && \
+#   curl -sL https://github.com/minio/mc/archive/refs/tags/$RELEASE_NAME.tar.gz -o /tmp/source.tar.gz && \
+#   tar -xzf /tmp/source.tar.gz --strip-components=1
 
-# Copy required binaries from b2 image
-COPY --from=b2-builder /build/__pypackages__/bin/b2 /usr/local/bin/b2
-COPY --from=b2-builder /build/__pypackages__/lib /opt/b2
 
-# Configuring the environment for b2
-ENV B2_CLI_DOCKER=1
-ENV PYTHONPATH=/opt/b2
 
-# Ensure the binaries version
-RUN echo "   etcd version: $(etcd --version)" >> /tmp/build-out.txt && \
-  echo "etcdctl version: $(etcdctl version)" >> /tmp/build-out.txt && \
-  echo "etcdutl version: $(etcdutl version)" >> /tmp/build-out.txt && \
-  echo "     b2 version: $(b2 version)" >> /tmp/build-out.txt && \
-  cat /tmp/build-out.txt
+# # =============================================
 
-RUN mkdir /scripts
+# FROM python:3.13-alpine
 
-COPY --chmod=0755 --chown=root:root backup.sh /scripts/backup.sh
-COPY --chmod=0755 --chown=root:root restore.sh /scripts/restore.sh
+# # Install required packages
+# RUN apk add --no-cache bash gnupg xz
 
-ENTRYPOINT [ "/scripts/backup.sh" ]
+# # Copy required binaries from etcd image
+# COPY --from=etcd-builder /build/bin/etcdctl /usr/local/bin/etcdctl
+# COPY --from=etcd-builder /build/bin/etcdutl /usr/local/bin/etcdutl
+
+# # Copy required binaries from b2 image
+# COPY --from=b2-builder /build/__pypackages__/bin/b2 /usr/local/bin/b2
+# COPY --from=b2-builder /build/__pypackages__/lib /opt/b2
+
+# # Configuring the environment for b2
+# ENV B2_CLI_DOCKER=1
+# ENV PYTHONPATH=/opt/b2
+
+# # Ensure the binaries version
+# RUN echo "   etcd version: $(etcd --version)" >> /tmp/build-out.txt && \
+#   echo "etcdctl version: $(etcdctl version)" >> /tmp/build-out.txt && \
+#   echo "etcdutl version: $(etcdutl version)" >> /tmp/build-out.txt && \
+#   echo "     b2 version: $(b2 version)" >> /tmp/build-out.txt && \
+#   cat /tmp/build-out.txt
+
+# RUN mkdir /scripts
+
+# COPY --chmod=0755 --chown=root:root backup.sh /scripts/backup.sh
+# COPY --chmod=0755 --chown=root:root restore.sh /scripts/restore.sh
+
+# ENTRYPOINT [ "/scripts/backup.sh" ]
