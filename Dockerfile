@@ -82,4 +82,4 @@ RUN mkdir /scripts
 COPY --chmod=0755 backup.sh /scripts/backup.sh
 COPY --chmod=0755 restore.sh /scripts/restore.sh
 
-# ENTRYPOINT [ "/scripts/backup.sh" ]
+ENTRYPOINT [ "/scripts/backup.sh" ]
