@@ -1,4 +1,4 @@
-FROM golang:1.24-alpine AS etcd-builder
+FROM golang:1.25-alpine AS etcd-builder
 
 LABEL maintainer="Sonic <sonic@djls.io>"
 LABEL org.opencontainers.image.source=https://github.com/justereseau/omni_etcd_backup
@@ -29,7 +29,7 @@ RUN case $(uname -m) in \
 
 # =============================================
 
-FROM golang:1.24-alpine AS mc-builder
+FROM golang:1.25-alpine AS mc-builder
 
 ARG MC_VERSION=latest
 
