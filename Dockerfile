@@ -58,7 +58,7 @@ RUN case $(uname -m) in \
 
 # =============================================
 
-FROM alpine:3.21.3
+FROM alpine:3.22.1
 
 # # Install required packages
 RUN apk add --no-cache bash gnupg xz
