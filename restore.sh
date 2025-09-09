@@ -47,8 +47,8 @@ fi
 # Ensure the backup directory exists or create it
 mkdir -p $ETCD_BACKUP_DIR
 
-
 # We check if any B2 parameters is not set
+S3_ENABLED=1
 if [ -z "$S3_ENDPOINT" ] || [ -z "$S3_BUCKET_NAME" ] || [ -z "$S3_ACCESS_KEY" ] || [ -z "$S3_SECRET_KEY" ]; then
   echo "One or more of the S3_ENDPOINT, S3_BUCKET_NAME, S3_ACCESS_KEY, S3_SECRET_KEY environment variables are not set."
   echo "Disabling B2 backup."
