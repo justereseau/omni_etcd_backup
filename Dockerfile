@@ -1,10 +1,5 @@
 FROM golang:1.25-alpine AS etcd-builder
 
-LABEL maintainer="Sonic <sonic@djls.io>"
-LABEL org.opencontainers.image.source=https://github.com/justereseau/omni_etcd_backup
-LABEL org.opencontainers.image.description="This is a simple image that contain the requirement to backup an etcd omni instance to B2."
-LABEL org.opencontainers.image.licenses=WTFPL
-
 ARG ETCD_VERSION=latest
 
 RUN apk add --no-cache bash curl jq git
@@ -25,7 +20,7 @@ RUN case $(uname -m) in \
   *) echo "Unsupported architecture: $(uname -m)" ; exit 1 ;; \
   esac && \
   echo "Building for $GOOS/$GOARCH" > /tmp/build-out.txt && \
-  ./build.sh
+  ./scripts/build.sh
 
 # =============================================
 
@@ -59,6 +54,11 @@ RUN case $(uname -m) in \
 # =============================================
 
 FROM alpine:3.22.1
+
+LABEL maintainer="Sonic <sonic@djls.io>"
+LABEL org.opencontainers.image.source=https://github.com/justereseau/omni_etcd_backup
+LABEL org.opencontainers.image.description="This is a simple image that contain the requirement to backup an etcd omni instance to B2."
+LABEL org.opencontainers.image.licenses=WTFPL
 
 # # Install required packages
 RUN apk add --no-cache bash gnupg xz
