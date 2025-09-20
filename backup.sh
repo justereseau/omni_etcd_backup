@@ -85,7 +85,6 @@ if [ $S3_ENABLED -eq 1 ]; then
   echo "Upload the encrypted snapshot to the backup storage ($S3_BUCKET_NAME on $S3_ENDPOINT)"
   export MC_HOST_S3=https://$S3_ACCESS_KEY:$S3_SECRET_KEY@$S3_ENDPOINT
   mc mv ${ETCD_BACKUP_DIR}/${SNAPSHOT_GPG_NAME} S3/$S3_BUCKET_NAME
-  mc ls S3/$S3_BUCKET_NAME
 else
   echo "S3 backup is disabled. Skipping the upload."
 fi
