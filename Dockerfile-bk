@@ -1,12 +1,12 @@
 FROM gcr.io/etcd-development/etcd:v3.6.6 AS etcd
-FROM alpine:3.22.2 AS builder
+FROM alpine:3.23.0 AS builder
 
 RUN apk add --no-cache wget
 
 RUN wget https://github.com/Backblaze/B2_Command_Line_Tool/releases/latest/download/b2-linux -O /usr/local/bin/b2 && \
   chmod +x /usr/local/bin/b2
 
-FROM alpine:3.22.2
+FROM alpine:3.23.0
 LABEL maintainer="Sonic <sonic@djls.io>"
 LABEL org.opencontainers.image.source=https://github.com/justereseau/omni_etcd_backup
 LABEL org.opencontainers.image.description="This is a simple image that contain the requirement to backup an etcd omni instance to B2."
