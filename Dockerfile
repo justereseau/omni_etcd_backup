@@ -53,7 +53,7 @@ RUN case $(uname -m) in \
 
 # =============================================
 
-FROM alpine:3.23.0
+FROM alpine:3.23.2
 
 LABEL maintainer="Sonic <sonic@djls.io>"
 LABEL org.opencontainers.image.source=https://github.com/justereseau/omni_etcd_backup
