@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine AS etcd-builder
+FROM golang:1.26-alpine AS etcd-builder
 
 ARG ETCD_VERSION=latest
 
@@ -24,7 +24,7 @@ RUN case $(uname -m) in \
 
 # =============================================
 
-FROM golang:1.25-alpine AS mc-builder
+FROM golang:1.26-alpine AS mc-builder
 
 ARG MC_VERSION=latest
 
